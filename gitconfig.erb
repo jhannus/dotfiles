@@ -2,16 +2,27 @@
 	name = <%= print("Your Name: "); STDOUT.flush; STDIN.gets.chomp %>
 	email = <%= print("Your Email: "); STDOUT.flush; STDIN.gets.chomp %>
 [alias]
+	s = status
 	co = checkout
-	hist = log --pretty=format:\"%h %ad | %s%d [%an]\" --graph --date=short
+	ci = commit
+	st = status
+	br = branch
+	hist = log --pretty=format:\"%Cred%h%Creset [%an] %C(yellow)%ad%Creset | %s%d\" --graph --date=local
+	type = cat-file -t
+	dump = cat-file -p
+	pending = log --branches --not --remotes --simplify-by-decoration --decorate --oneline
+	pull-rebase = pull --no-commit --rebase
 [color]
-	diff = auto
-	status = auto
 	branch = auto
+	diff = auto
+	interactive = auto
+	status = auto
 [core]
 	excludesfile = <%= ENV['HOME'] %>/.gitignore
 	editor = mate -w
 	autocrlf = input
+	excludesfile = <%= ENV['HOME'] %>.gitignore_global
+	pager = less -r
 [apply]
 	whitespace = nowarn
 [format]

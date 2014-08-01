@@ -30,7 +30,7 @@ export SERVICES_ENV=local
 
 # git completeion
 #source `brew --prefix git`/etc/bash_completion.d/git-completion.bash
-source /usr/local/Cellar/git/1.7.11/etc/bash_completion.d/git-completion.bash
+#source /usr/local/Cellar/git/1.7.11/etc/bash_completion.d/git-completion.bash
 
 # Source global definitions
 if [ -f ~/src/scripts/git_prompt ]; then
@@ -106,6 +106,6 @@ function maven_debug_opt() {
     
 }
 
-PATH=`brew --prefix emacs`/bin:$PATH
+#PATH=`brew --prefix emacs`/bin:$PATH
 
-export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
+#export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting

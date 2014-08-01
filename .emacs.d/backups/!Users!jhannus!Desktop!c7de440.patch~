@@ -1,0 +1,263 @@
+commit c7de4403fee58c843a8a8f681a82a179f0abcdd4
+Author: Justin Hannus <jhannus@constantcontact.com>
+Date:   Wed Dec 5 16:56:52 2012 -0800
+
+    SC-2353 first account context impl. Working but needs refactoring.
+
+diff --git a/scrui-webapp/app/controllers/account_context_controller.rb b/scrui-webapp/app/controllers/account_context_controller.rb
+new file mode 100644
+index 0000000..631e0ff
+--- /dev/null
++++ b/scrui-webapp/app/controllers/account_context_controller.rb
+@@ -0,0 +1,54 @@
++require 'logging'
++require 'account_session'
++
++class AccountContextController < ApplicationController
++  protect_from_forgery
++
++  around_filter :isolate_context
++  before_filter :select_account
++  before_filter :require_account
++
++  class InconsistentAccountSession < RuntimeError; end
++  class NoAccountSpecified < RuntimeError; end
++
++  def account_session
++    @account_session ||= AccountSession.new(cookies['sso_so'], @log)
++  end
++  
++  def isolate_context
++    Current.scope {yield}
++  end
++
++  def require_account
++    exception_handler(NoAccountSpecified.new 'No account specified.') unless Current.account
++  end
++
++  def select_account
++    puts cookies.inspect
++    if !cookies['sso_so']
++      Current.account = params[:account_id]
++    else
++      if cookies['sso_so']
++        id = account_session.account_id
++        if params[:account_id]
++          id == params[:account_id] or raise InconsistentAccountSession,
++          "account_id does not match cookie"
++        end
++        Current.account = id
++      else
++        Current.account = params[:account_id]
++      end
++    end
++    Current.account or raise NoAccountSpecified, "this action requires a valid account id"
++    
++  rescue AccountSession::InvalidTokenError, InconsistentAccountSession, NoAccountSpecified => e
++    Rails.logger.error(e)
++    render_invalid_account
++  end
++    
++  # error handlers...
++  def render_invalid_account
++    exception_handler NoAccountSpecified.new('No account specified.')
++  end
++  
++end
+diff --git a/scrui-webapp/app/controllers/application_controller.rb b/scrui-webapp/app/controllers/application_controller.rb
+index 425cdf4..80ce107 100644
+--- a/scrui-webapp/app/controllers/application_controller.rb
++++ b/scrui-webapp/app/controllers/application_controller.rb
+@@ -1,12 +1,8 @@
+ require 'logging'
+-#require 'ctctrest/scapi'
+-#require 'ctctrest/editor_api'
+-#require 'ctctrest/productservice'
+-#require 'ctctrest/tracking'
+ 
+ class ApplicationController < ActionController::Base
+   protect_from_forgery
+-
++    
+   # only show custom error pages in production mode...
+   if ActionController::Base.config.consider_all_requests_local
+     rescue_from Exception, :with => :exception_handler
+@@ -14,13 +10,13 @@ class ApplicationController < ActionController::Base
+     rescue_from ActionController::UnknownController, :with => :render_not_found
+     rescue_from ActionController::UnknownAction, :with => :render_not_found
+   end
+-
++    
+   def initialize
+     super
+     @log = Logging.logger["SCRUI::#{self.class.name}"]
+     @log.info("#{controller_name} controller initialized")
+   end
+-
++    
+   # Error handlers...
+   def render_not_found(exception)
+     @log.error(exception)
+diff --git a/scrui-webapp/app/controllers/coupon_controller.rb b/scrui-webapp/app/controllers/coupon_controller.rb
+index a222d56..1a5a19b 100644
+--- a/scrui-webapp/app/controllers/coupon_controller.rb
++++ b/scrui-webapp/app/controllers/coupon_controller.rb
+@@ -4,56 +4,9 @@ require 'smmcommon/scapiv3/channel'
+ require 'smmcommon/scapiv3/activity'
+ require 'active_resource/exceptions'
+ 
+-class CouponController < ApplicationController
++class CouponController < AccountContextController
+   
+   def index
+-    
+-    begin
+-      SmmCommon::ScapiV3::Resource.setopts({
+-        site: "https://scapi.d1.roving.com/rest/v3/account/:account_id",
+-        user: 'scui',
+-        password: 'ROVING'
+-        })
+-    
+-        campaign = SmmCommon::ScapiV3::SocialCampaign.find('72f757ee-7c12-4772-9067-9fa7052fb57b', 
+-        :params => { :account_id => 1100331225695})
+-        puts "attributes: "+campaign.attributes.inspect
+-    
+-        campaign.name = "This is the new name!"
+-        campaign.save
+-        
+-        new_campaign = SmmCommon::ScapiV3::SocialCampaign.new(:name => 'Ryan', :account_id => 1100331225695)
+-        new_campaign.save
+-        puts new_campaign.inspect
+-        
+-        # deletes a campaign...
+-        #campaign.destroy
+-    
+-        extaccount = SmmCommon::ScapiV3::ExternalAccount.find('100003773086489', 
+-        :params => { :account_id => 1100361664112, :external_account_type => 'FACEBOOK'})
+-        puts extaccount.inspect
+-    
+-        extaccount.status = 'CONNECTED'
+-        extaccount.save
+-    
+-        channel = SmmCommon::ScapiV3::Channel.find('152259278237344', 
+-        :params => { :account_id => 1100361664112, :external_account_type => 'FACEBOOK', :external_account_id => 100001618924644})
+-        puts channel.inspect  
+-    
+-        channel.channel_name = "This is the new name!"
+-        channel.save
+-    
+-        activity = SmmCommon::ScapiV3::Activity.find('b1c8390e-3999-11e2-ba40-001ec9b6ef53', 
+-        :params => { :account_id => 1100361664112})
+-        puts activity.inspect  
+-    
+-        activity.headline = "This is the new headline!"
+-        activity.save
+-    
+-      rescue ActiveResource::ClientError => e
+-        puts e.inspect
+-      end
+-  
+   end
+ 
+   def preview
+diff --git a/scrui-webapp/config/initializers/current_context.rb b/scrui-webapp/config/initializers/current_context.rb
+new file mode 100644
+index 0000000..39e45a9
+--- /dev/null
++++ b/scrui-webapp/config/initializers/current_context.rb
+@@ -0,0 +1,14 @@
++require 'context'
++
++class CurrentClass < BasicObject
++
++private
++
++  def method_missing(*a, &b)
++    ctx = (::Thread.current[:context] ||= ::Context.new)
++    ctx.send(*a, &b)
++  end
++
++end
++
++Current = CurrentClass.new
+\ No newline at end of file
+diff --git a/scrui-webapp/config/initializers/http_client.rb b/scrui-webapp/config/initializers/http_client.rb
+new file mode 100644
+index 0000000..90735da
+--- /dev/null
++++ b/scrui-webapp/config/initializers/http_client.rb
+@@ -0,0 +1,7 @@
++require 'httpclient'
++# In test and development, external service calls are stubbed with the WebMock
++# library. The WebMock stubs must be loaded before any HTTPClient instances
++# are initialized
++
++
++HTTPClientConn = HTTPClient.new
+\ No newline at end of file
+diff --git a/scrui-webapp/etc/keystore b/scrui-webapp/etc/keystore
+new file mode 100644
+index 0000000..e55883e
+Binary files /dev/null and b/scrui-webapp/etc/keystore differ
+diff --git a/scrui-webapp/etc/log4j.properties b/scrui-webapp/etc/log4j.properties
+new file mode 100644
+index 0000000..44b319a
+--- /dev/null
++++ b/scrui-webapp/etc/log4j.properties
+@@ -0,0 +1,18 @@
++log4j.rootCategory=INFO, stdout
++
++log4j.appender.scrui=org.apache.log4j.DailyRollingFileAppender
++log4j.appender.scrui.File=/opt/cc/logs/scrui_diag.log
++log4j.appender.scrui.DatePattern='.'yyyy-MM-dd
++log4j.appender.scrui.layout=org.apache.log4j.PatternLayout
++log4j.appender.scrui.layout.ConversionPattern=%d{ISO8601} %-5p %c %x - %m%n
++log4j.appender.scrui.level=INFO
++
++log4j.appender.stdout=org.apache.log4j.ConsoleAppender
++log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
++log4j.appender.stdout.layout.ConversionPattern=%d{ABSOLUTE} %5p %t %c{2}:%L - %m%n
++
++# examples of how to increase logging level for various aspects of spring
++#log4j.category.org.springframework=TRACE
++#log4j.category.org.springframework.servlet=TRACE
++#log4j.category.org.springframework.annotation=DEBUG
++#log4j.category.org.springframework.beans.factory=DEBUG
+\ No newline at end of file
+diff --git a/scrui-webapp/lib/account_session.rb b/scrui-webapp/lib/account_session.rb
+index 2ffaaf8..07263c0 100644
+--- a/scrui-webapp/lib/account_session.rb
++++ b/scrui-webapp/lib/account_session.rb
+@@ -1,14 +1,15 @@
++require 'httpclient'
+ 
+ class AccountSession
+ 
+-  def initialize(cookie, log)
++  def initialize(cookie, log=false)
+     @cookie = cookie
+     @log = log
+     valid? or raise InvalidTokenError, 'Token failed to validate'
+   end
+ 
+   def account_id
+-    @log.info "Fetching account id from sso service at: #{APP_CONFIG['sso_host']} /ssoservice/identity/attributes" if @log
++    @log.info "Fetching account id from sso service at: #{APP_CONFIG['sso_host']}/ssoservice/identity/attributes" if @log
+     so_details = HTTPClientConn.post(APP_CONFIG['sso_host']+'/ssoservice/identity/attributes', {subjectid: @cookie})
+     so_details.body.match(/^SITE_OWNER_UID=(?<account_id>.+)$/)[:account_id]
+   end
+@@ -20,12 +21,13 @@ class AccountSession
+   def valid?
+     validate_token.body == 'true'
+   rescue Exception => e
++    @log.error(e) if @log
+     false
+   end
+ 
+   def validate_token
+     http = HTTPClient.new
+-    @log.info "Validating token from sso service at: #{APP_CONFIG['sso_host']} /ssoservice/identity/isTokenValid" if @log
++    @log.info "Validating token from sso service at: #{APP_CONFIG['sso_host']}/ssoservice/identity/isTokenValid" if @log
+     http.post(APP_CONFIG['sso_host']+'/ssoservice/identity/isTokenValid', {tokenid: @cookie})
+   end
+ 

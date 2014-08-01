@@ -1,0 +1,128 @@
+# manage switching between views and notifying various uis
+define ["underscore", "backbone", "../collections/view"], (_, Backbone, ViewCollection) ->
+  Backbone.View.extend
+    initialize: ->
+      @views = new ViewCollection()
+      @views.on "add", @handlers.onViewAdd, this
+      @views.on "remove", @handlers.onViewRemove, this
+      @views.on "change:active", @handlers.onViewChangeActive, this
+
+    handlers:
+      onViewAdd: (viewModel, collection) ->
+        onChangeActiveModel = (changedViewModel, activating) ->
+          
+          # allow/deny "blurring" this view
+          if viewModel is changedViewModel and not activating
+            if typeof view.canBlur is "function" and view.canBlur()
+              
+              # allow - call blur, when present
+              view.onBlur()  if typeof view.onBlur is "function"
+            else
+              
+              # deny - quietly reactivate this viewModel
+              viewModel.set
+                active: 1
+              ,
+                silent: 1
+
+        view = viewModel.get("view")
+        
+        # capture and assign change:active handler for this viewModel
+        # capture and assign change handler specific to this model and view
+        viewModel.set onChangeActiveModel: onChangeActiveModel
+        collection.on "change:active", onChangeActiveModel
+
+      onViewRemove: (viewModel, collection) ->
+        collection.off "change:active", viewModel.get("onChangeActiveModel")
+        
+        # clean up
+        @activeView = null  if @activeView is viewModel
+
+      
+      #
+      #                    // ensure a panel is active - don't do this for now
+      #                    if (collection.models.length) {
+      #                        collection.models[0].set({active: 1});
+      #                    }
+      #                    
+      onViewChangeActive: (viewModel, activating, options) ->
+        view = undefined
+        
+        # if attempting to activate this viewModel and it's not currently active...
+        if activating and @activeView isnt viewModel
+          
+          # ensure the active viewModel can be deactivated
+          
+          # if there is no active viewModel, or...
+          
+          # the active viewModel can be deactivated...
+          if not @activeView or (@activeView.set(active: 0) and not @activeView.get("active"))
+            
+            # set & announce new active view
+            @activeView = viewModel
+            @trigger "switch", @sanitizeViewModel(viewModel)
+            view = viewModel.get("view")
+            view.onFocus()  if typeof view.onFocus is "function"
+          else # otherwise, if the activeView can not be deactivated...
+            # re-deactivate the offending viewModel (silently)
+            viewModel.set
+              active: 0
+            ,
+              silent: 1
+
+
+    
+    # returns reference-safe'ish version of an view
+    sanitizeViewModel: (viewModel) ->
+      id: viewModel.cid
+      el: viewModel.get("view").el
+      meta: viewModel.get("meta")
+
+    
+    # public members
+    activeView: null
+    addView: (view, meta) ->
+      addedView = undefined
+      if typeof view is "object"
+        addedView = @views.add(
+          view: view
+          meta: meta or {}
+        ).where(view: view)[0]
+        @trigger "add", @sanitizeViewModel(addedView)
+        return addedView.cid
+      ""
+
+    removeView: (viewRef) ->
+      viewModel = (if typeof viewRef is "string" then @views.get(id) else @views.where(view: viewRef)[0])
+      if viewModel
+        @views.remove viewModel
+        @trigger "remove", @sanitizeViewModel(viewModel)
+        return true
+      false
+
+    
+    # activate a given view by it's corresponding viewModel's id or the view itself
+    activate: (viewRef) ->
+      targetViewModel = (if typeof viewRef is "string" then @views.getByCid(viewRef) else @views.where(view: viewRef)[0])
+      if targetViewModel and @activeView isnt targetViewModel
+        targetViewModel.set active: 1
+        
+        # if the view is still active (after processing the change)...
+        return true  if targetViewModel.get("active")
+      
+      # flag failure to activate the targeted view
+      false
+
+    
+    # list available views
+    list: ->
+      vm = this
+      @views.models.map (viewModel) ->
+        vm.sanitizeViewModel viewModel
+
+
+    
+    # retrieve the currently active view (or null)
+    current: ->
+      (if @activeView then @sanitizeViewModel(@activeView) else null)
+

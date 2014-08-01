@@ -1,0 +1,63 @@
+diff --cc pom.xml
+index 37b084f,caf5dac..0000000
+--- a/pom.xml
++++ b/pom.xml
+@@@ -8,7 -8,7 +8,11 @@@
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.constantcontact.apps.smm</groupId>
+    <artifactId>scui</artifactId>
+++<<<<<<< HEAD
+ +  <version>1.21.0.0-SNAPSHOT</version>
+++=======
++   <version>1.15.0.0-SNAPSHOT</version>
+++>>>>>>> b4fe6215881a2035325bec255c95becfc3fa995d
+    <packaging>pom</packaging>
+    <name>apps/scui</name>
+    <description>The site-owner UI for creating and managing Social Campaigns.</description>
+diff --cc scui-rpm/pom.xml
+index 3587e46,ca21a62..0000000
+--- a/scui-rpm/pom.xml
++++ b/scui-rpm/pom.xml
+@@@ -4,10 -4,10 +4,17 @@@
+    <parent>
+      <groupId>com.constantcontact.apps.smm</groupId>
+      <artifactId>scui</artifactId>
+++<<<<<<< HEAD
+ +    <version>1.21.0.0-SNAPSHOT</version>
+ +  </parent>
+ +  <artifactId>scui-rpm</artifactId>
+ +  <version>1.21.0.0-SNAPSHOT</version>
+++=======
++     <version>1.15.0.0-SNAPSHOT</version>
++   </parent>
++   <artifactId>scui-rpm</artifactId>
++   <version>1.15.0.0-SNAPSHOT</version>
+++>>>>>>> b4fe6215881a2035325bec255c95becfc3fa995d
+    <packaging>rpm</packaging>
+    <name>scui-rpm</name>
+    <properties>
+diff --cc scui-webapp/pom.xml
+index 171be4e,39c150e..0000000
+--- a/scui-webapp/pom.xml
++++ b/scui-webapp/pom.xml
+@@@ -4,12 -4,12 +4,20 @@@
+    <parent>
+      <groupId>com.constantcontact.apps.smm</groupId>
+      <artifactId>scui</artifactId>
+++<<<<<<< HEAD
+ +    <version>1.21.0.0-SNAPSHOT</version>
+++=======
++     <version>1.15.0.0-SNAPSHOT</version>
+++>>>>>>> b4fe6215881a2035325bec255c95becfc3fa995d
+    </parent>
+  
+    <groupId>com.constantcontact.apps.sc.scui</groupId>
+    <artifactId>scui-webapp</artifactId>
+++<<<<<<< HEAD
+ +  <version>1.21.0.0-SNAPSHOT</version>
+++=======
++   <version>1.15.0.0-SNAPSHOT</version>
+++>>>>>>> b4fe6215881a2035325bec255c95becfc3fa995d
+    <packaging>war</packaging>
+    <name>scui/scui-webapp</name>
+    <description>Social Campaigns web UI app</description>

@@ -1,0 +1,10 @@
+<<<<<<< HEAD
+=======
+#!/bin/sh
+
+# Removes old config file with different casing in name.
+if [ -e /etc/httpd/conf/ConstantContactScui.conf ]; then
+  echo "Found old config ConstantContactScui.conf file, removing."
+  rm -f /etc/httpd/conf/ConstantContactScui.conf
+fi
+>>>>>>> 4e09215... SC-2417 fixed copy-paste error

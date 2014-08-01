@@ -1,0 +1,12 @@
+require 'http_get_helper'
+require 'uri'
+
+class AccountSvcHealthcheck < Healthcheck::Base
+
+  healthcheck 'AccountSvc Healthcheck', :critical do
+    puts URI.join(APP_CONFIG['accountsvc_service_url'], '/healthcheck_ping').to_s
+    response = HttpGetHelper::get(URI.join(APP_CONFIG['accountsvc_service_url'], '/healthcheck_ping').to_s)
+    status = response.body.strip.downcase == 'pong' ? [:passed] : [:failed]
+  end
+
+end

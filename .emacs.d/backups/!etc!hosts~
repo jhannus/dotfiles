@@ -1,0 +1,32 @@
+##
+# Host Database
+#
+# localhost is used to configure the loopback interface
+# when the system is booting.  Do not change this entry.
+##
+127.0.0.1	localhost
+255.255.255.255	broadcasthost
+::1             localhost 
+fe80::1%lo0	localhost
+
+127.0.0.1	localhost1.roving.com localhost2.roving.com
+127.0.0.1	smm.local.d1.constantcontact.com
+#127.0.0.1	smm.d1.constantcontact.com
+127.0.0.1	social.local.d1.constantcontact.com
+127.0.0.1	localhost.d1.constantcontact.com
+127.0.0.1	localhost.d1.roving.com
+#127.0.0.1	sots.d1.roving.com
+#127.0.0.1	scwpeditor.d1.constantcontact.com
+#127.0.0.1	editorapi.d1.constantcontact.com
+
+192.168.190.137	ui.c1-vmdjb237.roving.com
+192.168.188.24	ui.c1-vmdjb147.d1.constantcontact.com
+192.168.190.139	sclp.c1-vmdjb239.roving.com
+127.0.0.1	scrui.d1.constantcontact.com
+
+127.0.0.1       em-svc.local.d1.roving.com
+127.0.0.1       em.local.d1.constantcontact.com
+127.0.0.1	smm.local.d1.constantcontact.com
+192.168.242.148	em-svc.jhannusmacvm2.roving.com
+192.168.242.12 em.jhannusmacvm2.roving.com
+127.0.0.1      em-svc.d1.roving.com

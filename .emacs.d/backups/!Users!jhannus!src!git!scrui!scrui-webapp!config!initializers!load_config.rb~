@@ -1,0 +1,32 @@
+
+begin
+  _APP_CONFIG = YAML.load_file(File.join(File::SEPARATOR, "opt", "cc", "etc", "sclp", "sclp.yml"))
+  raise "APP_CONFIG section not found for env: #{Rails.env}" unless _APP_CONFIG.has_key? Rails.env
+  puts "Loaded sclp.yml with env: #{Rails.env}"
+    
+  APP_CONFIG = _APP_CONFIG[Rails.env]
+  CYBERARK_CONFIG = APP_CONFIG['cyberark']
+
+  if RUBY_ENGINE.downcase == 'jruby'
+    puts "Starting jruby rails with env: #{Rails.env}"
+    require 'java'
+    import "java.lang.System"
+    
+    begin
+      app_name = System.getProperty("jboss.app")
+    rescue Exception => e
+      puts "Error reading jboss.app property. If you're not running this in JBoss, it can be ignored."
+      puts e
+    end
+    if app_name
+      APP_CONFIG["cyberark"]["app_name"] = app_name
+      puts "Set app name from jboss.app property. Name = #{app_name}"
+    end
+  end
+
+rescue Exception => e
+  APP_CONFIG = {}
+  CYBERARK_CONFIG = {}
+    puts "Error during load_config. Reason: " + e.message
+
+end

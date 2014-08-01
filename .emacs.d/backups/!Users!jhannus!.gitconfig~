@@ -1,0 +1,27 @@
+[alias]
+  co = checkout
+  ci = commit
+  st = status
+  br = branch
+  hist = log --pretty=format:\"%Cred%h%Creset [%an] %C(yellow)%ad%Creset | %s%d\" --graph --date=local
+  type = cat-file -t
+  dump = cat-file -p
+  pending = log --branches --not --remotes --simplify-by-decoration --decorate --oneline
+  pull-rebase = pull --no-commit --rebase
+[user]
+	name = Justin Hannus
+	email = jhannus@constantcontact.com
+[core]
+	excludesfile = /Users/jhannus/.gitignore_global
+	autocrlf = true
+[color]
+	branch = auto
+	diff = auto
+	interactive = auto
+	status = auto
+[difftool "sourcetree"]
+	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
+	path = 
+[mergetool "sourcetree"]
+	cmd = /Applications/SourceTree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+	trustExitCode = true

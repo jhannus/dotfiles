@@ -1,0 +1,203 @@
+#!/bin/sh
+
+function fail {
+  printf "%s: ERROR: %s\n" $(basename $0) "$*"
+  exit 1
+}
+
+function info {
+  printf "%s: INFO: %s\n" $(basename $0) "$*"
+  return $?
+}
+
+if [ "$(whoami)" != "root" ]; then
+  fail "I must be run as root! Run me like \`\$ sudo -E $0\` to carry your rvm env over."
+elif [ -z "$(which rvm)" ]; then
+  fail "You need rvm installed before running the local setup. To install rvm see: $rvm_setup_link"
+elif [[ -z "$rvm_path" || -z "$GEM_HOME" ]]; then
+  fail "Rvm env not setup. Fix your rvm env first. If it is setup you may just need to use the -E flag with sudo."
+fi
+
+app_name="scrui"
+host_name="${app_name}.d1.constantcontact.com"
+java_host_name="smm.local.d1.constantcontact.com"
+root_dir=$(pwd)
+rvmstring=$(basename $GEM_HOME)
+passenger_ruby=$rvm_path/wrappers/$rvmstring/ruby
+gemhome=$GEM_HOME
+apache=$(which apachectl)
+apxs=$(which apxs)
+passenger_version="3.0.18"
+mod_passenger="$gemhome/gems/passenger-$passenger_version/ext/apache2/mod_passenger.so"
+apache_lib_dir="/usr/libexec/apache2"
+apache_config_dir="/etc/apache2" #/Users/jhannus/src/git/apache2/jason
+apache_vhost_dir="$apache_config_dir/other"
+apache_config_backup="./apache2-backup-$(date +%s).tgz"
+rvm_setup_link="http://wiki.roving.com/display/ProdDel/SCUI+On+Rails+Local+Development+Setup"
+export APXS=$apxs
+
+os=$(uname)
+os_lower="$(uname | tr '[A-Z]' '[a-z]')"
+info "Running install for a '$os' system..."
+if [ "$os_lower" == "darwin" ]; then
+  apache_lib_dir="/usr/libexec/apache2"
+  apache_config_dir="/etc/apache2"
+  apache_vhost_dir="$apache_config_dir/other"
+elif [ "$os_lower" == "linux" ]; then
+  apache_lib_dir="/etc/httpd/modules"
+  apache_config_dir="/etc/httpd/conf"
+  apache_vhost_dir="/etc/httpd/conf"
+else
+  fail "This system '${os}' is not supported. Exiting."
+fi
+
+info "Installing passenger gem..."
+if [ -e "$gemhome/gems/passenger-$passenger_version" ]; then
+  info "Passenger is already installed at: $gemhome/gems/passenger-$passenger_version"
+else
+  gem install --version $passenger_version passenger
+  if [ $? -ne 0 ]; then
+    fail "Failed to install passenger gem. Please fix the errors and try again."
+  fi
+fi
+
+# compile module...
+info "Compiling apache passenger module..."
+$gemhome/bin/passenger-install-apache2-module --auto
+if [ $? -ne 0 ]; then
+  fail "Failed to compile mod_passenger. Please fix the errors and try again."
+fi
+
+info "Copying passenger module to apaches load path..."
+cp $mod_passenger $apache_lib_dir
+
+info "Backing up old apache config to ${apache_config_backup}"
+tar czfP $apache_config_backup $apache_config
+
+info "Adding host entry for: $host_name"
+entry=$(grep 'scrui.d1.constantcontact.com' /etc/hosts)
+if [[ -z "$entry" || ${entry:0:1} = "#" ]]; then
+  echo "\n127.0.0.1\t$host_name" | cat >> /etc/hosts
+else
+  info "Host entry is already added. Skipping."
+fi
+
+info "Adding host entry for: $host_name"
+entry=$(grep 'scrui.d1.constantcontact.com' /etc/hosts)
+if [[ -z "$entry" || ${entry:0:1} = "#" ]]; then
+  echo "\n127.0.0.1\t$host_name" | cat >> /etc/hosts
+else
+  info "Host entry is already added. Skipping."
+fi
+
+info "Adding host entry for: $java_host_name"
+entry="$(grep '$java_host_name' /etc/hosts)"
+if [[ -z "$entry" || ${entry:0:1} = "#" ]]; then
+  echo "\n127.0.0.1\t$java_host_name" | cat >> /etc/hosts
+else
+  info "Host entry is already added. Skipping."
+fi
+
+if [ -e $apache_config_dir/ssl/server.crt ]; then
+  info "SSL certificates are already generated. Skipping."
+else
+  info "Generating SSL certificates. Please answer the questions when prompted. Be sure to use an empty passphrase!..."
+  mkdir -p $apache_config_dir/ssl
+  pushd $apache_config_dir/ssl &> /dev/null
+  ssh-keygen -f server.key
+  openssl req -new -key server.key -out request.csr
+  openssl x509 -req -days 365 -in request.csr -signkey server.key -out server.crt
+  popd &> /dev/null
+  info "Done SSL certificates."
+fi
+
+info "Stopping apache"
+$apache stop &> /dev/null
+
+info "Configuring apache..."
+mkdir -p /opt/cc/logs/http
+mkdir -p $apache_vhost_dir
+chmod 755 /opt/cc/logs/http
+cp $root_dir/scrui-rpm/etc/httpd/conf/ConstantContactScrui.conf $apache_vhost_dir
+
+# add ssl...
+perl -i -pe 's/#LoadModule ssl_module/LoadModule ssl_module/' $apache_config_dir/httpd.conf
+perl -i -pe 's/#Include (.*)\/httpd-ssl\.conf/Include $1\/httpd-ssl\.conf/' $apache_config_dir/httpd.conf
+perl -i -pe "s|SSLCertificateFile (.*)|SSLCertificateFile $apache_config_dir/ssl/server.crt|" $apache_vhost_dir/ConstantContactScrui.conf
+perl -i -pe "s|SSLCertificateKeyFile (.*)|SSLCertificateKeyFile $apache_config_dir/ssl/server.key|" $apache_vhost_dir/ConstantContactScrui.conf
+
+# change config for local setip...
+passenger_vhost_config="DocumentRoot $root_dir/scrui-webapp/public\\n"
+passenger_vhost_config="${passenger_vhost_config}RailsEnv development\\n"
+passenger_vhost_config="${passenger_vhost_config}RailsBaseURI /scrui\\n"
+passenger_vhost_config="${passenger_vhost_config}<Directory $root_dir/scrui-webapp/public>\\n"
+passenger_vhost_config="${passenger_vhost_config}\\tAllow from all\\n"
+passenger_vhost_config="${passenger_vhost_config}\\tAllowOverride all\\n"
+passenger_vhost_config="${passenger_vhost_config}\\tOptions -MultiViews\\n"
+passenger_vhost_config="${passenger_vhost_config}</Directory>\\n"
+
+perl -i -pe "s|DocumentRoot .*|$passenger_vhost_config|g" $apache_vhost_dir/ConstantContactScrui.conf
+perl -i -pe 's|ErrorLog .*|ErrorLog /opt/cc/logs/http/scrui_error|' $apache_vhost_dir/ConstantContactScrui.conf
+perl -i -pe 's|CustomLog .*|CustomLog /opt/cc/logs/http/scrui_access common env=!dontlog|' $apache_vhost_dir/ConstantContactScrui.conf
+perl -i -pe 's/Rewrite/#Rewrite/g' $apache_vhost_dir/ConstantContactScrui.conf
+perl -i -pe 's/JKMount/#JKMount/g' $apache_vhost_dir/ConstantContactScrui.conf
+
+# symlink for RailsBaseURI directove to work...
+info "Adding symlink for RailsBaseURI directive in: $root_dir/scrui-webapp/public/scrui"
+if [ ! -e $root_dir/scrui-webapp/public/scrui ]; then
+  ln -s $root_dir/scrui-webapp/public $root_dir/scrui-webapp/public/scrui
+else
+  info "Symlink for RailsBaseURI already present, skipping."
+fi
+
+info "Checking for default ssl virtual host..."
+if [ -f $apache_config_dir/extra/httpd-ssl.conf ]; then
+  perl -i -pe 's/\/server\.(crt|key)/\/ssl\/server\.$1/' $apache_config_dir/extra/httpd-ssl.conf
+  default_ssl_vhost=$(grep '<VirtualHost _default_:443>' $apache_config_dir/extra/httpd-ssl.conf)
+  if [ -n "$default_ssl_vhost" ]; then
+    # truncate file to remove default ssl vhost...
+    info "Found default ssl virtual host, removing."
+    perl -i -e 'undef $/; $_=<>; s/<VirtualHost _default_:443>(.*?)<\/VirtualHost>/# SSL virtual host removed by script/s; print' $apache_config_dir/extra/httpd-ssl.conf
+  fi
+fi
+
+# add passenger module...
+info "Checking for existing apache passenger module..."
+module=$(grep 'LoadModule passenger_module' $apache_config_dir/httpd.conf)
+if [ -n "$module" ]; then
+  # remove old...
+  info "Apache passenger module was previously confiured. Removing and reconfiguring."
+  perl -i -pe 's/LoadModule passenger_module .*//' $apache_config_dir/httpd.conf
+  perl -i -pe 's/PassengerRoot .*//' $apache_config_dir/httpd.conf
+  perl -i -pe 's/PassengerRuby .*//' $apache_config_dir/httpd.conf
+fi
+
+# add new...
+passenger_settings="LoadModule passenger_module libexec/apache2/mod_passenger.so"
+passenger_settings="${passenger_settings}\\nPassengerRoot $gemhome/gems/passenger-$passenger_version"
+passenger_settings="${passenger_settings}\\nPassengerRuby $passenger_ruby\\n"
+perl -i -pe "s|# LoadModule foo_module (.*)|# LoadModule foo_module \$1\\n$passenger_settings|" $apache_config_dir/httpd.conf
+
+info "Done configuring apache."
+info "Testing apache configuration..."
+configtest=$($apache configtest 2>&1)
+info $configtest
+if [ -z "$(echo $configtest | grep -i 'syntax ok')" ]; then
+  fail "Whoops! Looks like I just hosed your apache config. You can fix the errors above or restore from backup here: $apache_config_backup"
+fi
+
+info "Starting apache"
+$apache start &> /dev/null
+
+info "Running bundle install to ensure mod_passenger can find all its deps..."
+pushd scrui-webapp &> /dev/null
+bundle install
+popd &> /dev/null
+
+info "Enjoy."
+
+# open in browser window...
+open "https://smm.local.d1.constantcontact.com/scrui/healthcheck"
+
+
+

@@ -1,0 +1,23 @@
+accountsvc.server.address=https://accountsvc<%= url_prefix %>roving.com
+accountsvc.test.customer.uid=<%= test_customer_id %>
+authplat.server.address=https://auth-platform<%= url_prefix %>constantcontact.com
+authplat.test.customer.uid=<%= test_customer_id %>
+authplat.test.doc.id=<%= test_doc_id %>
+campaignapi.username=<%= campaignapi_username %>
+campaignapi.servicename=<%= campaignapi_servicename %>
+campaignapi.server.address=https://campaignapi<%= url_prefix %>roving.com/campaignapi/rest/
+campaignapi.test.customer.uid=<%= test_customer_id %>
+contactsapi.server.address=https://contactsapi<%= url_prefix %>roving.com
+contactservice.server.address=https://contacts-service<%= url_prefix %>roving.com/contacts-service/
+contactservice.test.customer.uid=<%= test_customer_id %>
+contactservice.test.list.id=<%= test_list_id %>
+emsvc.server.address=https://em-svc<%= url_prefix %>roving.com
+emsvc.username=<%= emsvc_username %>
+emsvc.servicename=<%= emsvc_servicename %>
+emsvc.test.customer.uid=<%= test_customer_id %>
+productsvc.username=<%= productsvc_username %>
+productsvc.password=<%= productsvc_password %>
+productsvc.server.address=https://productsvc<%= url_prefix %>roving.com
+productsvc.test.customer.uid=<%= test_customer_id %>
+ui.url=https://ui<%= url_prefix %>constantcontact.com
+jquery.version=1.7.1

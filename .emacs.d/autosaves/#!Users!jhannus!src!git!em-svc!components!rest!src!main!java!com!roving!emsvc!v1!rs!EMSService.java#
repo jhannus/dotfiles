@@ -1,0 +1,298 @@
+/*
+ * @(#)EMSService
+ *
+ * Copyright 2012 by Constant Contact Inc.,
+ * Waltham, MA 02451, USA
+ * Phone: (781) 472-8100
+ * Fax: (781) 472-8101
+ *
+ * All rights reserved.
+ *
+ * This software is the confidential and proprietary information
+ * of Constant Contact, Inc. created for Constant Contact, Inc.
+ * You shall not disclose such Confidential Information and shall use
+ * it only in accordance with the terms of the license agreement
+ * you entered into with Constant Contact, Inc.
+ * 
+ * History
+ *
+ * Date         Author      Comments
+ * ====         ======      ========
+ *
+ * 
+ **/
+package com.roving.emsvc.v1.rs;
+
+import java.util.List;
+import java.util.Map;
+import javax.ws.rs.*;
+import javax.ws.rs.core.*;
+
+import com.roving.api.campaign.domain.*;
+
+import com.roving.emsvc.v1.dto.*;
+import com.roving.emsvc.v1.exception.*;
+
+/**
+ * This service provides REST interfaces to manage Agents and Campaigns/CampaignActivities.
+ * 
+ * @author  bwilson
+ * @version em-svc-rest: Nov 12, 2012
+ */
+@Path("/v1/ems/")
+public interface EMSService {
+
+    /**
+     * getCampaign - ONLY FOR TESTING SO FAR
+     * @param long accountId The account ID
+     * @param String campaignId The UUID of the Campaign to return
+     * @return Campaign
+     * @throws ValidationException
+     * @throws Exception
+     */
+    @GET
+    @Path("{accountId}/campaign/{campaignUuid}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Campaign getCampaign(@PathParam("accountId") long accountId, 
+                                @PathParam("campaignUuid") String campaignId) throws ValidationException, Exception;
+
+    /**
+     * getAgent - ONLY FOR TESTING SO FAR
+     * @param long accountId The account ID
+     * @param long agentId The ID of the agent to return
+     * @return Agent
+     * @throws ValidationException
+     * @throws Exception
+     */
+//    @GET
+//    @Path("{accountId}/agent/{agentUid}")
+//    @Produces(MediaType.APPLICATION_JSON)
+//    public AgentDto getAgent(@PathParam("accountId") long accountId, 
+//                             @PathParam("agentUid") String agentUid) throws ValidationException, Exception;
+
+    /**
+     * create a new email
+     * 1.   create em bulk campaign
+     * 2.   create agent
+     * 3.   create campaign activity type Permalink
+     * 4.   create campaign activity type email
+     * 5.   return campaign activity id of type email
+     *
+     * @param accountId the account ID
+     * @param String name The name of the Agent/BULK_EMAIL CampaignActivity
+     * @param documentCollectionId - for Galileo html store
+     * @param timeZoneId - so time zone
+     * @param description of campaign
+     * 
+     * @return String identifying the campaign uuid
+     * @throws ValidationException
+     * @throws Exception
+     */
+    @POST
+    @Path("{accountId}/emails")
+    public String createEmail(@PathParam("accountId") long accountId,
+                              @QueryParam("name") String name,
+                              @QueryParam("documentCollectionId") String documentCollectionId,
+                              @QueryParam("timeZoneId") String timeZoneId,
+                              @QueryParam("description") String description) throws ValidationException, Exception;
+
+    /**
+     * Updates the external name of the Agent. 
+     * If no name parameter is present, it merely updates the last update time/by for CampaignThumbnail's reference
+     *
+     * @param long accountId The site owner ID
+     * @param long agentUid The Agent ID
+     * @return int identifying the number of rows returned
+     * @throws ValidationException
+     * @throws Exception
+     */
+    @PUT
+    @Path("/{accountId}/emails/{agentUid}")
+    public int updateAgent(@PathParam("accountId") long accountId, 
+                           @PathParam("agentUid") long id, 
+                           @QueryParam("name") String name) throws ValidationException, Exception;
+
+    /**
+     * Available for clean up of test data or to hide Agents from the UI that experienced errors during creation.
+     *
+     * @param long accountId The site owner ID
+     * @param long agentUid The Agent ID
+     * @return int identifying the number of rows returned
+     * @throws ValidationException
+     * @throws Exception
+     */
+    @DELETE
+    @Path("/{accountId}/emails/{agentUid}")
+    public int deactivateAgent(@PathParam("accountId") long accountId, 
+                               @PathParam("agentUid") long agentUid) throws ValidationException, Exception;
+
+
+    /**
+     * Returns HTML header content for the given site owner
+     * Used to support Galileo header editor AJAX calls through EM 
+     *
+     * @param long accountId The site owner ID
+     * @return HTML
+     * @throws ValidationException
+     * @throws Exception
+     */
+    @GET
+    @Path("/{accountId}/email/header")
+//    @Produces(MediaType.APPLICATION_JSON)
+    public String getEmailHeaderContent(@PathParam("accountId") long accountId) throws ValidationException, Exception;
+
+    /**
+     * Returns HTML footer content for the given site owner
+     * Used to support Galileo footer editor AJAX calls through EM 
+     *
+     * @param long accountId The site owner ID
+     * @return HTML
+     * @throws ValidationException
+     * @throws Exception
+     */
+    @GET
+    @Path("/{accountId}/email/footer")
+//    @Produces(MediaType.APPLICATION_JSON)
+    public String getEmailFooterContent(@PathParam("accountId") long accountId) throws ValidationException, Exception;
+
+    /**
+     * For testing purposes. Actual service calls POST version.
+     * Gets the raw email content/header data from auth-platform, 
+     * replaces EMM Freemarker placeholders, generates a text version of the content, 
+     * and returns the email header/content prepared for the Scheduler
+     *
+     * @param long accountId The account ID
+     * @param String documentId The Galileo Document UUID
+     * @param String campaignActivityId The BULK_EMAIL CampaignActivity UUID
+     * @param long externalId The Agent ID
+     * @return ActivityContent
+     * @throws ValidationException
+     * @throws Exception
+     */
+    @GET
+    @Path("account/{accountId}/document/{documentCollectionId}/activity/{campaignActivityId}/external/{externalId}/email/content")
+    @Produces(MediaType.APPLICATION_JSON)
+    public ActivityContent getActivityContent(@PathParam("accountId") long accountId,
+                                              @PathParam("documentCollectionId") String documentId, 
+                                              @PathParam("campaignActivityId") String campaignActivityId,
+                                              @PathParam("externalId") long externalId) throws ValidationException, Exception;
+
+    /**
+     * Gets the raw email content/header data from auth-platform, 
+     * replaces EMM Freemarker placeholders, generates a text version of the content, 
+     * and returns the email header/content prepared for the Scheduler
+     *
+     * @param long accountId The account ID
+     * @param String documentId The Galileo Document UUID
+     * @param String campaignActivityId The BULK_EMAIL CampaignActivity UUID
+     * @param long externalId The Agent ID
+     * @return ActivityContent
+     * @throws ValidationException
+     * @throws Exception
+     */
+    @POST
+    @Path("account/{accountId}/document/{documentCollectionId}/activity/{campaignActivityId}/external/{externalId}/email/content")
+    @Produces(MediaType.APPLICATION_JSON)
+    public ActivityContent getActivityContent(@PathParam("accountId") long accountId,
+                                              @PathParam("documentCollectionId") String documentId, 
+                                              @PathParam("campaignActivityId") String campaignActivityId,
+                                              @PathParam("externalId") long externalId,
+                                              Map<String,String> properties) throws ValidationException, Exception;
+
+    /**
+     * Deprecated
+     * 
+     * Gets the raw email content/header data from auth-platform, 
+     * replaces EMM Freemarker placeholders, generates a text version of the content, 
+     * and returns the email header/content prepared for the Scheduler
+     *
+     * @param String documentId The Galileo Document UUID
+     * @param String campaignActivityId The BULK_EMAIL CampaignActivity UUID
+     * @param long externalId The Agent ID
+     * @return ActivityContent
+     * @throws ValidationException
+     * @throws Exception
+     */
+    @POST
+    @Path("/document/{documentCollectionId}/activity/{campaignActivityId}/external/{externalId}/email/content")
+    @Produces(MediaType.APPLICATION_JSON)
+    public ActivityContent getActivityContent(@PathParam("documentCollectionId") String documentId, 
+                                              @PathParam("campaignActivityId") String campaignActivityId,
+                                              @PathParam("externalId") long externalId) throws ValidationException, Exception;
+
+    /**
+     * For testing purposes. Actual service calls POST version.
+     * Gets the raw email content/header data from auth-platform, 
+     * replaces EMM Freemarker placeholders, generates a text version of the content, 
+     * and returns the archive/Permalink content prepared for the Scheduler
+     *
+     * @param long accountId The account ID
+     * @param String documentId The Galileo Document UUID
+     * @param String campaignActivityId The BULK_EMAIL CampaignActivity UUID
+     * @param long externalId The Agent ID
+     *
+     * @return ActivityContent
+     * @throws ValidationException
+     * @throws Exception
+     *
+     */
+    @GET
+    @Path("account/{accountId}/document/{documentCollectionId}/activity/{campaignActivityId}/external/{externalId}/archive/content")
+    @Produces(MediaType.APPLICATION_JSON)
+    public ActivityContent getArchiveActivityContent(@PathParam("accountId") long accountId,
+                                                     @PathParam("documentCollectionId") String documentId,
+                                                     @PathParam("campaignActivityId") String campaignActivityId, 
+                                                     @PathParam("externalId") long externalId) throws ValidationException, Exception;
+
+
+    /**
+     * Gets the raw email content/header data from auth-platform, 
+     * replaces EMM Freemarker placeholders, generates a text version of the content, 
+     * and returns the archive/Permalink content prepared for the Scheduler
+     *
+     * @param long accountId The account ID
+     * @param String documentId The Galileo Document UUID
+     * @param String campaignActivityId The BULK_EMAIL CampaignActivity UUID
+     * @param long externalId The Agent ID
+     * @param Map<String,String> properties The BULK_EMAIL CampaignActivity properties Map
+     *
+     * @return ActivityContent
+     * @throws ValidationException
+     * @throws Exception
+     *
+     */
+    @POST
+    @Path("account/{accountId}/document/{documentCollectionId}/activity/{campaignActivityId}/external/{externalId}/archive/content")
+    @Produces(MediaType.APPLICATION_JSON)
+    public ActivityContent getArchiveActivityContent(@PathParam("accountId") long accountId,
+                                                     @PathParam("documentCollectionId") String documentId,
+                                                     @PathParam("campaignActivityId") String campaignActivityId, 
+                                                     @PathParam("externalId") long externalId,
+                                                     Map<String, String> properties) throws ValidationException, Exception;
+
+    /**
+     * Deprecated
+     * 
+     * Gets the raw email content/header data from auth-platform, 
+     * replaces EMM Freemarker placeholders, generates a text version of the content, 
+     * and returns the archive/Permalink content prepared for the Scheduler
+     *
+     * @param String documentId The Galileo Document UUID
+     * @param String campaignActivityId The BULK_EMAIL CampaignActivity UUID
+     * @param long externalId The Agent ID
+     * @param Map<String,String> properties The BULK_EMAIL CampaignActivity properties Map
+     *
+     * @return ActivityContent
+     * @throws ValidationException
+     * @throws Exception
+     *
+     */
+    @POST
+    @Path("/document/{documentCollectionId}/activity/{campaignActivityId}/external/{externalId}/archive/content")
+    @Produces(MediaType.APPLICATION_JSON)
+    public ActivityContent getArchiveActivityContent(@PathParam("documentCollectionId") String documentId,
+                                                     @PathParam("campaignActivityId") String campaignActivityId, 
+                                                     @PathParam("externalId") long externalId,
+                                                     Map<String, String> properties) throws ValidationException, Exception;
+
+}

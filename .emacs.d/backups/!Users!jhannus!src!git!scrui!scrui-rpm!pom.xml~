@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.constantcontact.apps.smm.rails</groupId>
+    <artifactId>scrui</artifactId>
+    <version>0.1.0.0-development-SNAPSHOT</version>
+  </parent>
+  
+  <groupId>com.constantcontact.apps.smm.rails</groupId>
+  <artifactId>scrui-rpm</artifactId>
+  <version>0.1.0.0-development-SNAPSHOT</version>
+  <packaging>rpm</packaging>
+  <name>scrui-rpm</name>
+  
+  <properties>
+    <branch>${env.USER}</branch>
+    <srcTop>..</srcTop>
+    <ccOptDir>ConstantContactScrui</ccOptDir>
+    <rpmDistTop>target/dist/rpms</rpmDistTop>
+    <rpmTargetDir>target/rpm/${project.artifactId}/RPMS/noarch</rpmTargetDir>
+    <rpmTmpDir>target/tmp</rpmTmpDir>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <emmaVersion>2.0.5312</emmaVersion>
+    <rpmOptJbossServerDir>scrui</rpmOptJbossServerDir>
+    <rpmWorkersPropName>scrui</rpmWorkersPropName>
+    <rpmInitdStartupScript>scrui</rpmInitdStartupScript>
+    <rpmHttpdConfFiles>ConstantContactscrui.conf</rpmHttpdConfFiles>
+    <rpmAppHostnamePrefix>scrui</rpmAppHostnamePrefix>
+    <db2PropertiesFile>target/maven-templates/db2-properties/db2.properties</db2PropertiesFile>
+  </properties>
+  
+  <dependencies>
+    <dependency>
+      <groupId>${project.parent.groupId}</groupId>
+      <artifactId>scrui-webapp</artifactId>
+      <version>${project.version}</version>
+      <type>war</type>
+    </dependency>
+    <dependency>
+      <groupId>com.constantcontact.buildtools.ctct-profiles5</groupId>
+      <artifactId>globalConfig</artifactId>
+      <version>${ctct.version}</version>
+      <classifier>50</classifier>
+      <type>zip</type>
+    </dependency>
+    <dependency>
+      <groupId>com.constantcontact.buildtools.maven</groupId>
+      <artifactId>maven-templates</artifactId>
+      <version>${ctct.version}</version>
+      <type>zip</type>
+    </dependency>
+    <dependency>
+      <groupId>com.constantcontact.components</groupId>
+      <artifactId>common-management-war</artifactId>
+      <version>${ctct.version}</version>
+      <type>war</type>
+    </dependency>
+    <dependency>
+      <groupId>com.constantcontact.components</groupId>
+      <artifactId>cyberarkutil</artifactId>
+      <version>${ctct.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.constantcontact.third-party.ibm-db2-client</groupId>
+      <artifactId>db2jcc</artifactId>
+      <version>3.53.95</version>
+    </dependency>
+    <dependency>
+      <groupId>com.constantcontact.tools</groupId>
+      <artifactId>maven-tools</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
+      <type>zip</type>
+    </dependency>
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>5.1.18</version>
+    </dependency>
+  </dependencies>
+  
+  <build>
+    <resources>
+      <resource>
+        <targetPath>${project.build.directory}/tmp/opt/jboss/server/${rpmOptJbossServerDir}/envconfig</targetPath>
+        <directory>envconfig</directory>
+        <excludes>
+          <exclude>db2*.xml</exclude>
+        </excludes>
+      </resource>
+      <resource>
+        <targetPath>${project.build.directory}/tmp/opt/jboss/server/${rpmOptJbossServerDir}/etc</targetPath>
+        <directory>etc</directory>
+      </resource>
+      <resource>
+        <targetPath>${project.build.directory}/tmp/opt/jboss/server/${rpmOptJbossServerDir}/deployers</targetPath>
+        <directory>deployers</directory>
+      </resource>
+      <resource>
+        <targetPath>${project.build.directory}/tmp/opt/jboss/server/${rpmOptJbossServerDir}/conf</targetPath>
+        <directory>conf</directory>
+      </resource>
+      <resource>
+        <targetPath>${project.build.directory}/tmp/opt/jboss/server/${rpmOptJbossServerDir}/deploy</targetPath>
+        <directory>deploy</directory>
+      </resource>
+      <resource>
+        <targetPath>rpm-scripts</targetPath>
+        <filtering>true</filtering>
+        <directory>${basedir}/target/maven-tools/templates/rpm-scripts</directory>
+      </resource>
+      <!--<resource>
+        <targetPath>../tmp/opt/jboss/server/${rpmOptJbossServerDir}/deploy/scrui.war/WEB-INF</targetPath>
+        <directory>${basedir}/src/webapp/web/WEB-INF/</directory>
+      </resource>-->
+      <resource>
+        <targetPath>local-scripts</targetPath>
+        <filtering>true</filtering>
+        <directory>scripts</directory>
+      </resource>
+    </resources>
+    
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.3.1</version>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>rpm-maven-plugin</artifactId>
+        <extensions>true</extensions>
+        <configuration>
+          <defineStatements>
+            <defineStatement>_unpackaged_files_terminate_build 0</defineStatement>
+          </defineStatements>
+          <postinstallScript>${project.build.outputDirectory}/rpm-scripts/postinstall</postinstallScript>
+          <preinstallScript>${project.build.outputDirectory}/rpm-scripts/preinstall</preinstallScript>
+          <postremoveScript>${project.build.outputDirectory}/rpm-scripts/postremove</postremoveScript>
+          <preremoveScript>${project.build.outputDirectory}/rpm-scripts/preremove</preremoveScript>
+          <changelogFile>scripts/changelog</changelogFile>
+          <mappings>
+            <mapping>
+              <directory>/opt/jboss/server/${rpmOptJbossServerDir}</directory>
+              <username>ccas</username>
+              <groupname>ccas</groupname>
+              <sources>
+                <source>
+                  <location>${rpmTmpDir}/opt/jboss/server/${rpmOptJbossServerDir}</location>
+                </source>
+              </sources>
+            </mapping>
+            <mapping>
+              <directory>/opt/cc/${ccOptDir}</directory>
+              <username>ccas</username>
+              <groupname>ccas</groupname>
+              <sources>
+                <source>
+                  <location>${rpmTmpDir}/opt/cc/${ccOptDir}</location>
+                </source>
+              </sources>
+            </mapping>
+          </mappings>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        
+        <executions>
+          <execution>
+            <id>scrui-rpm copy</id>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <phase>generate-sources</phase>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>${project.parent.groupId}</groupId>
+                  <artifactId>scrui-webapp</artifactId>
+                  <version>${project.version}</version>
+                  <type>war</type>
+                  <destFileName>scrui-webapp.war</destFileName>
+                  <outputDirectory>${rpmTmpDir}/opt/jboss/server/${rpmOptJbossServerDir}/deploy</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>com.constantcontact.third-party.ibm-db2-client</groupId>
+                  <artifactId>db2jcc</artifactId>
+                  <outputDirectory>${rpmTmpDir}/opt/jboss/server/${rpmOptJbossServerDir}/lib</outputDirectory>
+                  <destFileName>db2jcc.jar</destFileName>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>mysql</groupId>
+                  <artifactId>mysql-connector-java</artifactId>
+                  <outputDirectory>${rpmTmpDir}/opt/jboss/server/${rpmOptJbossServerDir}/lib</outputDirectory>
+                  <destFileName>mysql-connector-java.jar</destFileName>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>com.constantcontact.components</groupId>
+                  <artifactId>cyberarkutil</artifactId>
+                  <version>${com.constantcontact.components.version}</version>
+                  <outputDirectory>${rpmTmpDir}/opt/jboss/server/${rpmOptJbossServerDir}/lib</outputDirectory>
+                  <destFileName>cyberarkutil.jar</destFileName>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+          
+          <execution>
+            <id>scrui-rpm unpack</id>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <phase>generate-sources</phase>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>com.constantcontact.tools</groupId>
+                  <artifactId>maven-tools</artifactId>
+                  <type>zip</type>
+                  <overWrite>true</overWrite>
+                  <outputDirectory>target/maven-tools</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>com.constantcontact.buildtools.maven</groupId>
+                  <artifactId>maven-templates</artifactId>
+                  <type>zip</type>
+                  <overWrite>true</overWrite>
+                  <outputDirectory>target/maven-templates</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>com.constantcontact.buildtools.ctct-profiles5</groupId>
+                  <artifactId>globalConfig</artifactId>
+                  <type>zip</type>
+                  <classifier>50</classifier>
+                  <overWrite>false</overWrite>
+                  <outputDirectory>${rpmTmpDir}/opt/jboss/server/${rpmOptJbossServerDir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>com.constantcontact.components</groupId>
+                  <artifactId>common-management-war</artifactId>
+                  <type>war</type>
+                  <overWrite>true</overWrite>
+                  <outputDirectory>${rpmTmpDir}/opt/jboss/server/${rpmOptJbossServerDir}/deploy/jmx.war</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+		  
+        </executions>
+      </plugin>
+      
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.4</version>
+        <dependencies>
+            <dependency>
+              <groupId>emma</groupId>
+              <artifactId>emma</artifactId>
+              <version>${emmaVersion}</version>
+            </dependency>
+            <dependency>
+              <groupId>org.apache.ant</groupId>
+              <artifactId>ant</artifactId>
+              <version>1.8.2</version>
+            </dependency>
+            <dependency>
+              <groupId>emma</groupId>
+              <artifactId>emma_ant</artifactId>
+              <version>${emmaVersion}</version>
+            </dependency>
+            <dependency>
+              <groupId>xalan</groupId>
+              <artifactId>xalan</artifactId>
+              <version>2.6.0</version>
+            </dependency>
+            <dependency>
+              <groupId>ant</groupId>
+              <artifactId>ant-nodeps</artifactId>
+              <version>1.6.5</version>
+            </dependency>
+            <dependency>
+              <groupId>jakarta-regexp</groupId>
+              <artifactId>jakarta-regexp</artifactId>
+              <version>1.4</version>
+            </dependency>
+            <dependency>
+              <groupId>ant</groupId>
+              <artifactId>ant-jakarta-regexp</artifactId>
+              <version>1.6.1</version>
+            </dependency>
+            <dependency>
+              <groupId>ant</groupId>
+              <artifactId>ant-trax</artifactId>
+              <version>1.6.5</version>
+            </dependency>
+        </dependencies>
+        
+        <executions>
+	  <execution>
+            <id>Copy static assets</id>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <phase>process-resources</phase>
+            <configuration>
+              <tasks>
+                <copy todir="${rpmTmpDir}/opt/cc/${ccOptDir}/docroot/scrui/assets">
+                  <fileset dir="${srcTop}/scrui-webapp/app/assets/images" includes="**/*"></fileset>
+                </copy>
+                <copy todir="${rpmTmpDir}/opt/cc/${ccOptDir}/docroot/scrui/assets">
+                  <fileset dir="${srcTop}/scrui-webapp/app/assets/javascripts" includes="**/*.js"></fileset>
+                </copy>
+                <copy todir="${rpmTmpDir}/opt/cc/${ccOptDir}/docroot/scrui/assets">
+                  <fileset dir="${srcTop}/scrui-webapp/app/assets/stylesheets" includes="**/*.css"></fileset>
+                </copy>
+                <copy todir="${rpmTmpDir}/opt/cc/${ccOptDir}/docroot/scrui/assets">
+                  <fileset dir="${srcTop}/scrui-webapp/app/assets/static" includes="**/*"></fileset>
+                </copy>
+              </tasks>
+            </configuration>
+          </execution>    
+          <execution>
+            <id>Append unique steps to postinstall and postremove scripts</id>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <phase>process-resources</phase>
+            <configuration>
+              <tasks>
+                <concat append="true" destfile="target/classes/rpm-scripts/postinstall">
+                  <filelist dir="target/classes/local-scripts" files="postinstall"></filelist>
+                </concat>
+                <concat append="true" destfile="target/classes/rpm-scripts/preinstall">
+                  <filelist dir="target/classes/local-scripts" files="preinstall"></filelist>
+                </concat>
+                <concat append="true" destfile="target/classes/rpm-scripts/postremove">
+                  <filelist dir="target/classes/local-scripts" files="postremove"></filelist>
+                </concat>
+                <concat append="true" destfile="target/classes/rpm-scripts/preremove">
+                  <filelist dir="target/classes/local-scripts" files="preremove"></filelist>
+                </concat>
+              </tasks>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      
+      <plugin>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+      
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>properties-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>Read DB2 properties file ${db2PropertiesFile}</id>
+            <goals>
+              <goal>read-project-properties</goal>
+            </goals>
+            <phase>generate-resources</phase>
+            <configuration>
+              <files>
+                <file>${db2PropertiesFile}</file>
+              </files>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

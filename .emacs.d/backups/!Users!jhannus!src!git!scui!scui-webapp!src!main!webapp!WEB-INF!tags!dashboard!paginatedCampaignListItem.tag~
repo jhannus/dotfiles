@@ -1,0 +1,55 @@
+<%@ include file="/WEB-INF/jsp/taglibs.inc.jsp" %>
+
+<%@ attribute name="model" required="true" type="com.roving.scapi.rs.v2.domain.SocialCampaign" %>
+<%@ attribute name="cssClass" required="true" type="java.lang.String" %>
+<%@ attribute name="timezoneId" required="true" type="java.lang.String" %>
+
+<<<<<<< HEAD
+<tr id="fb-campaign-list-item-${model.id}" class="sc-list-item sc-type-${model.type} ${cssClass}"
+=======
+<tr id="fb-campaign-list-item-${model.id}" class="social-campaign-list-item social-campaign-type-${fn:toLowerCase(model.type)} ${cssClass}"
+>>>>>>> SC-2324, SC-2452 Added copy coupon campaign and fixed existing links added by Sandford.
+    data-campaign-id="${model.id}" data-campaign-name="${model.name}" data-draft-docid="${model.landingPageActivity.draftDocumentCollectionId}"
+    data-docid="${model.landingPageActivity.documentCollectionId}"
+    data-previewurl="${model.previewUrl}" data-campaign-status="${model.status}">
+  <td align="center" class="sc-list-item-checkbox"><input class="delete-campaign-cb" type="checkbox" data-scid="${model.id}" /></td>
+  <td>
+    <div class="media left"><img class="thumb" src="${model.thumbnail}" /></div>
+    <div class="campaign-details-container">
+	    <div class="campaign-edit-container">
+	        <span class="strong">Name:</span>
+	        <span class="inplace-edit ellipsised campaign-title" title="<spring:message text="${model.name}" htmlEscape="true"/>"><c:out value="${model.name}" /></span>
+	        <span class="inplace-edit-ind inplace-edit-hover apptegic" data-apptegic='{"action": "EditSCName", "params": {"campaignId": "${model.id}"}}'></span>
+	        <div class="clear"></div>
+	    </div>
+	    <div class="campaign-date-container">
+		    <c:choose>
+		        <c:when test="${model.status == 'SCHEDULED' or model.status == 'ACTIVE' or model.status == 'DONE'}">
+		            <span class="strong date-pubsched">Dates:</span>
+		            <span class="date-container"><fmt:formatDate pattern="MM/dd/yyyy hh:mm a z" value="${model.landingPageActivity.startOn}" timeZone="${timezoneId}"/> - <fmt:formatDate pattern="MM/dd/yyyy hh:mm a z" value="${model.landingPageActivity.endOn}" timeZone="${timezoneId}"/></span>
+		        </c:when>
+		        <c:otherwise>
+		            <span class="strong date-draft">Updated:</span>
+		            <span class="date-container"><fmt:formatDate pattern="MM/dd/yyyy hh:mm a z" value="${model.updatedOn}" timeZone="${timezoneId}"/></span>
+		        </c:otherwise>
+		    </c:choose>
+		    <div class="clear"></div>
+	    </div>
+	    <div class="clear"></div>
+    </div>
+    <div class="clear"></div>
+  </td>
+  <%-- BEGIN TODO: we can get rid of this condition if we can update enum--%>
+  <td align="center" style="text-transform: capitalize; border-left:1px solid #e1e1e1;">
+      <c:choose>
+          <c:when test="${model.status == 'DONE'}">completed</c:when>
+          <c:when test="${model.status == 'ACTIVE'}">published</c:when>
+          <c:otherwise><c:out value="${fn:toLowerCase(model.status)}" /></c:otherwise>
+      </c:choose>
+  </td>
+  <%-- END TODO: we can get rid of this condition if we can update enum--%>
+  <td align="center" class="last-child">
+    <scui:socialCampaignOptionsMenu model="${model}" fbUrl="${model.welcomTabUrl}" />
+    <a class="btn-secondary alt options-menu-btn">Options<span class="ic ic-menu"></span></a>
+  </td>
+</tr>

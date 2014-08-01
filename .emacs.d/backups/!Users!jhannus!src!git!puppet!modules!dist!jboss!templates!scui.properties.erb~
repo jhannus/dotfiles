@@ -1,0 +1,35 @@
+com.roving.scui.appId = <%= scui_appId %>
+com.roving.smm.facebook.appId = <%= scui_fb_appId %>
+com.roving.smm.facebook.apiKey = <%= scui_fb_apiKey %>
+com.roving.smm.facebook.appSecret = <%= scui_fb_appSecret %>
+
+com.roving.scui.cyberark.safeName = <%= scui_cyberark_safe %>
+com.roving.scui.cyberark.safeObject = SOTSAPIKey_SCUI_curr
+
+com.roving.scui.sots.serviceUrl = https://sots<%= url_prefix %>roving.com/remoting/v1/SiteOwnerTokenService
+com.roving.scui.sots.defaultMaxConnectionsPerHost = 5
+com.roving.scui.sots.connectionTimeout = 2000
+com.roving.scui.sots.soTimeout = 10000
+
+com.roving.scui.socialnetworks.callbackUrlBase = https://smm<%= url_prefix %>constantcontact.com/scui-webapp/
+com.roving.scui.socialnetworks.facebookPostAuthSuffix = /landingpage/postauth
+
+com.roving.scui.liveperson.lpNumber = <%= scui_liveperson_number %>
+com.roving.scui.liveperson.lpServer = sales.liveperson.net
+
+com.roving.scui.app.baseImageURL = 
+com.roving.scui.oss.closelink = https://smm<%= url_prefix %>constantcontact.com/scui-webapp/closeDistuiOverlay.jsp?overlay=distuiSimpleShare
+com.roving.ui.webroot = https://ui<%= url_prefix %>constantcontact.com/
+com.roving.oss.appurl = https://oss<%= url_prefix %>constantcontact.com/
+com.roving.imageroot = https://imgssl<%= url_prefix %>constantcontact.com/ui
+com.roving.scui.v9.welcomePagedEditor.url = https://scwpeditor<%= url_prefix %>constantcontact.com/scwpe/editor/edit
+
+com.roving.account.service.url = https://accountsvc<%= url_prefix %>roving.com/v1/
+com.roving.product.service.url = https://productsvc<%= url_prefix %>roving.com/v1/
+com.roving.shortener.service.url = https://ui<%= url_prefix %>constantcontact.com/rnavmap/em/social/shorten
+com.roving.account.service.safeName = accountsvc_s_<%= scui_servenv %>
+com.roving.product.service.safeName = productsvc_s_<%= scui_servenv %>
+com.roving.access.allowed.partnerUIds = <%= scui_allowedIDs %>
+com.roving.smm.trackingroot = http://permalink<%= url_prefix %>roving.com
+
+com.roving.scrui.urlPrefix=https://smm%= url_prefix %>constantcontact.com/scrui

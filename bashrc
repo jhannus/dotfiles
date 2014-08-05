@@ -20,7 +20,6 @@ alias ll='ls -l'
 alias gitlog='git log --pretty=format:"%h %ad | %s%d [%an]" --graph --date=short'
 
 # User specific aliases and functions
-export PS1='\[\e[0;33m\]\u\[\e[0m\]@\[\e[0;33m\]\h\[\e[m\]\[\e[0m\]:\[\e[0;33m\]\[\e[1;35m\]\W\[\e[m\] \[\e[0;33m\]\$\[\e[m\] \[\e[0;37m\]'
 
 #export MAVEN_OPTS="-Xmx1024m -Xms256m -XX:MaxPermSize=256m"
 export JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/CurrentJDK/Home
@@ -109,3 +108,4 @@ function maven_debug_opt() {
 #PATH=`brew --prefix emacs`/bin:$PATH
 
 #export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
+export PS1='\[\e[0;33m\]\u\[\e[0m\]@\[\e[0;33m\]\h\[\e[m\]\[\e[0m\]:\[\e[0;33m\]\[\e[1;35m\]\W\[\e[m\] \[\e[0;33m\]\$\[\e[m\] \[\e[0;37m\]'

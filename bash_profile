@@ -24,3 +24,5 @@ export PATH
 
 export NVM_DIR="/Users/jhannus/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
+
+export PS1='\[\e[0;33m\]\u\[\e[0m\]@\[\e[0;33m\]\h\[\e[m\]\[\e[0m\]:\[\e[0;33m\]\[\e[1;35m\]\W\[\e[m\] \[\e[0;33m\]\$\[\e[m\] \[\e[0;37m\]'

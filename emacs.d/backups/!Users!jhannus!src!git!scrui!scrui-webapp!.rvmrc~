@@ -1,2 +1,0 @@
-export JRUBY_OPTS=--1.9
-rvm --create use jruby-1.6.8@sclp-rails-webapp

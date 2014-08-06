@@ -22,8 +22,9 @@ alias gitlog='git log --pretty=format:"%h %ad | %s%d [%an]" --graph --date=short
 # User specific aliases and functions
 
 #export MAVEN_OPTS="-Xmx1024m -Xms256m -XX:MaxPermSize=256m"
-export JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/CurrentJDK/Home
-export PATH=/sbin:/usr/local/subversion/bin:$JAVA_HOME/bin:$PATH:~/src/scripts::/usr/local/mysql/bin
+#export JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/CurrentJDK/Home
+#export PATH=/sbin:/usr/local/subversion/bin:$JAVA_HOME/bin:$PATH:~/src/scripts::/usr/local/mysql/bin
+
 export EDITOR="emacs -nw"
 export SERVICES_ENV=local
 

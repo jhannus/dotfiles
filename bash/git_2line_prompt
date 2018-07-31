@@ -1,0 +1,44 @@
+#!/bin/bash
+
+PS_RESET="\[\e[0;39m\]"
+PS_RED="\[\e[0;31m\]"
+PS_GREEN="\[\e[0;32m\]"
+PS_BLUE="\[\e[0;34m\]"
+PS_YELLOW="\[\e[0;33m\]"
+PS_CYAN="\[\e[0;36m\]"
+PS_GRAY1="\[\e[0;37m\]"
+PS_GRAY2="\[\e[0;90m\]"
+PS_MAGENTA="\[\e[0;35m\]"
+
+__h_old_ps1=$PS1
+
+__h_git_prompt()
+{
+  local branch=`git branch 2>/dev/null | grep -e '*' | sed -e 's/^* //'`
+
+  PS_LINE=`printf -- '- %.0s' {1..200}`
+  PS_FILL=${PS_LINE:0:$COLUMNS}
+  PS_TIME="\[\033[\$((COLUMNS-21))G\] ${PS_GRAY2}[${PS_BLUE}\D{%F %T}${PS_GRAY2}]"
+
+  if [ "$branch" ]
+  then
+    local git_dir=$(git rev-parse --git-dir)
+
+    if [ $git_dir = .git ]
+    then
+      git_dir=$PWD
+    else
+      git_dir=$(dirname $git_dir)
+    fi
+
+    local repo_name=$(basename $git_dir)
+    local repo_dir="${PWD:$((${#git_dir} + 1))}"
+    PS_INFO="${PS_GREEN}${repo_name} ${PS_CYAN}${branch}${PS_RESET} ${repo_dir}"
+  else
+    PS_INFO="${PS_YELLOW}\u${PS_RESET}@${PS_YELLOW}\h${PS_RESET}:${PS_MAGENTA}\w"
+  fi
+
+  export PS1="${PS_GRAY2}${PS_FILL}\[\033[0G\]${PS_INFO} ${PS_TIME}\n${PS_RESET}\$ "
+}
+
+PROMPT_COMMAND=__h_git_prompt

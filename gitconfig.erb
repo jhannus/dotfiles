@@ -19,7 +19,7 @@
 	status = auto
 [core]
 	excludesfile = <%= ENV['HOME'] %>/.gitignore
-	editor = mate -w
+	editor = emacs -nw
 	autocrlf = input
 	excludesfile = <%= ENV['HOME'] %>.gitignore_global
 	pager = less -r
@@ -30,3 +30,5 @@
 [github]
 	user = <%= print("GitHub Username: "); STDOUT.flush; STDIN.gets.chomp %>
 	token = <%= print("GitHub API Token: "); STDOUT.flush; STDIN.gets.chomp %>
+[sequence]
+	editor = emacs -nw

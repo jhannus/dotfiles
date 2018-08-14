@@ -6,6 +6,7 @@ alias ls='ls -G'
 alias ll='ls -l'
 alias lla='ls -la'
 alias gitlog='git log --pretty=format:"%h %ad | %s%d [%an]" --graph --date=short'
+alias vissh='vi ~/.ssh/known_hosts'
 
 # misc
 alias reload='. ~/.bash_profile'

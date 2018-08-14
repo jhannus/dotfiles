@@ -21,3 +21,9 @@ function maven_debug_opt() {
     return;
   fi
 }
+
+# Transient SSH.
+# Do not cache public key to ~/.ssh/known_hosts
+function tssh() {
+    /usr/bin/ssh $@ -o "UserKnownHostsFile /dev/null" -o "LogLevel ERROR"
+}

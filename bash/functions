@@ -25,5 +25,13 @@ function maven_debug_opt() {
 # Transient SSH.
 # Do not cache public key to ~/.ssh/known_hosts
 function tssh() {
-    /usr/bin/ssh $@ -o "UserKnownHostsFile /dev/null" -o "LogLevel ERROR"
+  /usr/bin/ssh $@ -o "UserKnownHostsFile /dev/null" -o "LogLevel ERROR"
+}
+
+function reload() {
+  echo "Reloading bash_profile..."
+  # save PATH so we dont auto append PATH to PATH
+  ORIG_PATH=$PATH
+  source ~/.bash_profile
+  PATH=$ORIG_PATH
 }

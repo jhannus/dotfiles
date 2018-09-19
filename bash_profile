@@ -23,7 +23,7 @@ eval "$(rbenv init -)"
 # test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shell_integration.bash"
 
 if [ -e $(brew --prefix nvm)/nvm.sh ]; then
-   export NVM_DIR=~/.nvm
+   export NVM_DIR="$HOME/.nvm"
    source $(brew --prefix nvm)/nvm.sh
 fi
 
